@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Testing</title>
+
+  <style>
+    .container {
+      position: relative;
+
+      width: 500px;
+      height: 500px;
+
+      border: 1px solid black;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container"></div>
+
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="http://3Dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+
+  <script>
+    $(function () {
+
+      var sender = Math.round(Math.random() * 10000)
+
+      var viewer = $3Dmol.createViewer($('.container'), {})
+      viewer.addBox({center: {x: 0, y: 0, z: 0}, dimensions: {w: 3, h: 4, d: 2}, color: 'magenta'})
+      viewer.zoomTo()
+      viewer.render()
+
+      var websocket = new WebSocket('ws://' + window.location.host + '/ws/test/1/')
+
+      websocket.onmessage = function (event) {
+        var data = JSON.parse(event.data)
+        if (data['sender'] !== sender) {
+          viewer.setView(data['view'])
+        }
+      }
+      var sendView = false
+
+      $('.container').on('mousedown mouseup', function (event) {
+        if (event.type === 'mousedown') {
+          sendView = true
+        } else {
+          sendView = false
+        }
+      })
+
+      setInterval(function () {
+        if (sendView === true) {
+          websocket.send(JSON.stringify({'sender': sender, 'view': viewer.getView()}))
+        }
+      }, 20)
+
+    })
+  </script>
+
+</body>
+</html>
